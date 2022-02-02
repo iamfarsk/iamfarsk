@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+  
+    <title>Housie</title>
+    <style>
+            .button {
+                background-color: rgb(248, 9, 9);
+                border: none;
+                color: white;
+                padding: 15px 32px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 25px;
+                font-weight: bolder;
+                margin: 4px 2px;
+                cursor: pointer;
+                -webkit-transition-duration: 0.4s;
+                transition-duration: 0.4s;
+            }
+            
+            .button1:hover {
+                box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24),0 17px 50px 0 rgba(0,0,0,0.19);
+            }
+    </style>
+
+
+  <body style="overflow: hidden; Z" bgcolor="#242526" onload="populate()">
+    <br/>
+    <p align=center style="color:white;font-size:20pt">
+        <!-- <img src="/common/assets/images/header_logo.png" style="width:auto; height:15vh;"/> -->
+		HOUSIE
+    </p>
+     
+<table id="table" align="center" border="1" cellspacing="0" style="height: 30vh;">
+    <tr>
+        <td id="current" bgcolor=royalblue align=center style="font-size:180pt; width:50vh; font-weight:bolder;color:white">?</td>
+        <td>
+            <table id="table2" border="1" cellspacing="0" bgcolor="white" onload="populate()">
+                
+            </table>
+        </td>
+    </tr>
+</table>
+<br/>
+<br/>
+    <div align=center style="height: 15vh;">
+            <button id="draw" onclick="random()" class="button button1">DRAW</button>
+    </div>
+  </body>
+  
+    <script>
+      var voices = window.speechSynthesis.getVoices();
+      var numbers = [];
+      for(i=1; i <=90 ; i++){
+          numbers.push(i);
+      }
+	  
+      Array.prototype.shuffle = function() {
+        let m = this.length, i;
+        while (m) {
+          i = (Math.random() * m--) >>> 0;
+          [this[m], this[i]] = [this[i], this[m]]
+        }
+        return this;
+      }
+	  
+	  function populate(){
+		  var k=0; 
+		  var table = document.getElementById("table2");
+		  for(i=1; i<=9; i++){
+			  var row = document.createElement("tr");
+			  row.style.height = '5vh';
+			  for(j=1; j<=10; j++){
+				k++;
+				var cell = document.createElement("td");
+				cell.setAttribute('id', k);
+				cell.innerHTML = k;
+				cell.setAttribute('align', 'center');
+				cell.style.fontSize = '20pt';
+				cell.style.width = '5vh'
+				row.appendChild(cell);
+			  }
+			  table.appendChild(row);
+		  }
+	  }
+	  	  			  
+      function random(){
+        
+        var random = numbers.shuffle().pop();
+        if(random !== undefined){
+          speak(random);
+        }
+        
+        var element = document.getElementById(random);
+        element.bgColor = '#00FF00';
+        element.innerHTML = random;
+        element.innerHTML = random;
+        element.style.color = "black";
+        element.style.fontWeight = "bolder";
+        document.getElementById("current").innerHTML = random;
+      }
+      function speak(number){
+        var msg = new SpeechSynthesisUtterance();
+        msg.voice = voices[10];
+        msg.voiceURI = "native";
+        msg.volume = 1;
+        msg.rate = 0.6;
+        msg.pitch = 12;
+        msg.text = number;
+        msg.lang = 'en-US';
+        speechSynthesis.speak(msg);
+      }
+    </script>
+  
+</html>
