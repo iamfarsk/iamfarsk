@@ -8,8 +8,12 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
   <style>
+    body{
+      overflow: hidden;
+    }
+
     .header {
-        height: 10vh;
+      height: 10vh;
     }
 	  
 	  #current {
@@ -20,28 +24,42 @@
 		  color:white;
 	  }
 	  
-	  #board-div {
-		height: 90vh;
-	  }
-	  
-	  #board {
-		height: 90vh;
+	  #board-div, #board {
+		  height: 90vh;
+      font-size: 3vh;
+      border-collapse:separate;
+      border-spacing:0.2em 0.2em
 	  }
 
     /* Extra small devices (phones, 600px and down) */
-    @media only screen and (max-width: 700px) {
+    /* @media only screen and (max-height: 600px) {
+    } */
+    
+    /* Extra small devices (phones, 600px and down) */
+    @media only screen and (max-width: 600px) {
       #current {
+        width:100%;
         height: 50vh;
         font-size:35vh; 
       }
       #board-div, #board {
-        height: 40vh;
-      }
-
+        width:100%;
+		    height: 40vh;
+        font-size: 2vh;
+	    }
     }
 
     /* Small devices (portrait tablets and large phones, 600px and up) */
-    @media only screen and (min-width: 700px) {
+    @media only screen and (min-width: 600px) {
+      /* #current {
+        width:100%;
+        height: 50vh;
+        font-size:35vh; 
+      }
+      #board-div, #board {
+        width:100%;
+		    height: 40vh;
+	    } */
     }
 
     /* Medium devices (landscape tablets, 768px and up) */
@@ -77,43 +95,36 @@
     }
     
     function populate(){
-        console.log('called')
-        var k=0; 
-        var table = document.getElementById("board");
-        for(i=1; i<=9; i++){
-            var row = document.createElement("tr");
-            row.style.height = '4vh';
-            for(j=1; j<=10; j++){
-              k++;
-              var cell = document.createElement("td");
-              cell.setAttribute('id', k);
-              cell.innerHTML = k;
-              cell.setAttribute('align', 'center');
-              cell.style.fontSize = '3vh';
-			  cell.style.width = '4vh';
-              cell.style.height = '4vh';
-              row.appendChild(cell);
-            }
-            table.appendChild(row);
+      var k=0; 
+      var table = document.getElementById("board");
+      for(i=1; i<=9; i++){
+        var row = document.createElement("tr");
+        for(j=1; j<=10; j++){
+          k++;
+          var cell = document.createElement("td");
+          cell.setAttribute('id', k);
+          cell.innerHTML = k;
+          cell.setAttribute('align', 'center');
+          row.appendChild(cell);
         }
+        table.appendChild(row);
+      }
     }
                         
     function random(){
-      
       var random = numbers.shuffle().pop();
-	  if(random){
-		  speak(random);
-		  var element = document.getElementById(random);
-		  element.bgColor = "green";
-		  element.style.borderRadius = '50%';
-		  element.innerHTML = random;
-		  element.style.color = "white";
-		  element.style.fontWeight = "bolder";
-		  document.getElementById("current").innerHTML = random;
-	  }
+      if(random){
+        speak(random);
+        var element = document.getElementById(random);
+        element.bgColor = "green";
+        element.style.borderRadius = '50%';
+        element.innerHTML = random;
+        element.style.color = "white";
+        element.style.fontWeight = "bolder";
+        document.getElementById("current").innerHTML = random;
+      }
     }
     function speak(number){
-	console.log(number);
       var msg = new SpeechSynthesisUtterance();
       msg.voice = voices[10];
       msg.voiceURI = "native";
@@ -126,15 +137,15 @@
     }
   </script>
 </head>
-<body onload="populate()" style="scroll:none;">
+<body onload="populate()">
 
 <div class="container-fluid">
     
     <div class="row">
         
-        <div id="current" class="col-sm-6 text-center">?</div>
+        <div id="current" class="col-xs-6 text-center">?</div>
         
-        <div id="board-div" class="col-sm-6">
+        <div id="board-div" class="col-xs-6">
             <table id="board" class="table">
             </table>
         </div>
