@@ -21,6 +21,11 @@
 
   
   <style>
+    @font-face {
+      font-family: Monoton;
+      src: url(Monoton-Regular.ttf);
+    }
+
     body{
       overflow: hidden;
       user-select: none;
@@ -46,7 +51,7 @@
       height: 100vh;
 		  background-color:black;
       color: whitesmoke;
-      font-family: cursive;
+      font-family: Monoton;
 	  }
 
 	  #current {
@@ -156,7 +161,7 @@
         // populate('board');
       }, 0)
   }else{
-    randomLoop();
+    setTimeout(() => randomLoop(), 0);
   }
   // if(token){
   //   randomLoop();
@@ -303,7 +308,8 @@
     <div id="home-signin" class="col-xs-5 text-center">
       <div>
         <!-- <h2>H<span style="margin: -0.8vh;">&#128525;</span>USiE</h2> -->
-        <h1>H<span style="font-size: 1.3em; margin: -0.8vh;">&#9786;</span>USiE</h1>
+        <!-- <h1>H<span style="font-size: 1.3em; margin: -0.8vh;">&#9786;</span>USiE</h1> -->
+        <h1>HOUSIE</h1>
         <h4>A multi-player online game</h4>
         <br/>
         <br/>
