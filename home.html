@@ -23,7 +23,6 @@
   <style>
     body{
       overflow: hidden;
-      user-select: none;
     }
 
     #view2{
@@ -144,17 +143,14 @@
 
   const token = new URLSearchParams(window.location.hash.substr(1)).get("access_token");
   if(token){
-    
       setTimeout(()=> {
-        document.getElementById('post-login').style.display = 'block';
-        document.getElementById('btn-login').style.display = 'none';
-        // console.log('slept')
-        // // document.getElementById("home").style.display = "none";
-        // document.getElementById("home").remove();
-        // document.getElementById("view2").style.display = "block";
-        // document.rem
-        // populate('board');
-      }, 0)
+        console.log('slept')
+        // document.getElementById("home").style.display = "none";
+        document.getElementById("home").remove();
+        document.getElementById("view2").style.display = "block";
+        document.rem
+        populate('board');
+      }, 3000)
   }else{
     randomLoop();
   }
@@ -264,30 +260,6 @@
       msg.lang = 'en-US';
       speechSynthesis.speak(msg);
     }
-
-    function resetGroupForm(){
-      document.getElementById('ctrl-group').style.display = 'none';
-      document.getElementById('inp-create').style.display = 'none';
-      document.getElementById('btn-create').style.display = 'block';
-      document.getElementById('btn-join').style.display = 'block';
-    }
-
-    function enableForm(fn){
-      document.getElementById('ctrl-group').style.display = 'block';
-      document.getElementById('inp-create').style.display = 'block';
-      document.getElementById('inp-create').focus();
-      document.getElementById('btn-confirm').onclick = fn;
-      document.getElementById('btn-create').style.display = 'none';
-      document.getElementById('btn-join').style.display = 'none';
-    }
-
-    const create = () => {
-      window.alert('create');
-    }
-    const join = () => {
-      window.alert('join');
-    }
-
   </script>
 </head>
 
@@ -306,39 +278,12 @@
         <h1>H<span style="font-size: 1.3em; margin: -0.8vh;">&#9786;</span>USiE</h1>
         <h4>A multi-player online game</h4>
         <br/>
-        <br/>
       </div>
-      
-      <div id="btn-login">
-        <button type="button" onclick="window.location.href ='https://accounts.google.com/o/oauth2/v2/auth?scope=profile+email&include_granted_scopes=true&response_type=token&state=state_parameter_passthrough_value&redirect_uri=http://localhost:3000&client_id=154902370229-bbigpdpguqde07mpgo53g0p3nrbhnvv1.apps.googleusercontent.com';" style="width:32vh; font-size: medium;" class="btn-lg btn-warning">
+      <div>
+        <button type="button" onclick="window.location.href ='https://accounts.google.com/o/oauth2/v2/auth?scope=profile+email&include_granted_scopes=true&response_type=token&state=state_parameter_passthrough_value&redirect_uri=http://localhost:3000&client_id=154902370229-bbigpdpguqde07mpgo53g0p3nrbhnvv1.apps.googleusercontent.com';" style="font-size: medium;" class="btn-lg btn-warning">
           Connect via Google <span class="glyphicon glyphicon-log-in"></span>
         </button>
       </div>
-
-      <div id="post-login" style="display: none;">
-        <div id="btn-create">
-          <button type="button" onclick="enableForm(create)" style="width:32vh; font-size: medium;" class="btn-lg btn-warning">
-            Create Group</span>
-          </button>
-        </div>
-        
-        <div id="btn-join">
-          <br/>
-          <button type="button" onclick="enableForm(join)" style="width:32vh;font-size: medium;" class="btn-lg btn-warning">
-            Join Group
-          </button>
-        </div>
-  
-        <div id="inp-create" style="display: none;">
-          <input type="text" placeholder="Group name" autofocus=true class="input-lg text-center" style="color:black; width:32vh; font-size: medium;"/>
-        </div>
-        <div id="ctrl-group" style="display: none;">
-          <br/>
-          <button id="btn-cancel" type="button" onclick="resetGroupForm()" class="btn btn-lg btn-danger" style="width: 15.5vh; font-size: medium;">Cancel</button>&nbsp;
-          <button id="btn-confirm" type="button" class="btn btn-lg btn-success" style="width: 15.5vh; font-size: medium;">Confirm</button>
-        </div>
-      </div>
-
     </div>
   </div>
 </div>
