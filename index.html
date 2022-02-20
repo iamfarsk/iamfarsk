@@ -23,12 +23,25 @@
   <style>
     @font-face {
       font-family: Monoton;
-      src: url(Monoton-Regular.ttf);
+      src: url(fonts/Monoton-Regular.ttf);
+    }
+    @font-face {
+      font-family: Creepster;
+      src: url(fonts/Creepster-Regular.ttf);
+    }
+
+    @font-face {
+      font-family: Nosifer;
+      src: url(fonts/Nosifer-Regular.ttf);
     }
 
     body{
       overflow: hidden;
       user-select: none;
+    }
+
+    #brand{
+      font-family: Nosifer;
     }
 
     #view2{
@@ -51,7 +64,6 @@
       height: 100vh;
 		  background-color:black;
       color: whitesmoke;
-      font-family: Monoton;
 	  }
 
 	  #current {
@@ -147,6 +159,10 @@
     return this;
   }
 
+  const redirectUri = window.location.protocol + '//' + window.location.host;
+  const clientId = '154902370229-bbigpdpguqde07mpgo53g0p3nrbhnvv1.apps.googleusercontent.com';
+  const scope = 'profile+email'
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=${scope}&include_granted_scopes=true&response_type=token&state=state&redirect_uri=${redirectUri}&client_id=${clientId}`;
   const token = new URLSearchParams(window.location.hash.substr(1)).get("access_token");
   if(token){
     
@@ -163,24 +179,35 @@
   }else{
     setTimeout(() => randomLoop(), 0);
   }
-  // if(token){
-  //   randomLoop();
 
-    // socket.addEventListener('open', function (event) {
-    //   console.log('connection opened');
-    //   startBoard();
-    // });
-    // socket.addEventListener('message', function (event) {
-    //   document.getElementById("view1").style.display = "none";
-    //   document.getElementById("view2").style.display = "block";
-    //   console.log(event);
-    //   let response = JSON.parse(event.data);
-    //   response.randomNumber && publish(response.randomNumber, response.randomColor);
-    // });
+/*
+  if(token){
+    var socket;
+    try{
+      socket.addEventListener('open', function (event) {
+        console.log('connection opened => ' + JSON.stringify(event));
+        // startBoard();
+      });
+      socket.addEventListener('message', function (event) {
+        document.getElementById("view1").style.display = "none";
+        document.getElementById("view2").style.display = "block";
+        console.log(event);
+        let response = JSON.parse(event.data);
+        response.randomNumber && publish(response.randomNumber, response.randomColor);
+      });
+      socket.addEventListener('error', function(event) {
+        console.log(event);
+        document.getElementById('alert').style.display = 'block';
+      });
+    }catch(err){
+      console.log('dsfsdfsd' +err);
+      
+    }
+    
     
 
-  // }
-    
+  }
+    */
     
     
     
@@ -298,25 +325,31 @@
 
 <body onload="populate('home-board')">
 
-
+  
 <div id="home" class="container-fluid">
+  
   <div class="row">
+    
     <div id="home-board-div" class="col-xs-7">
       <table id="home-board" class="table">
       </table>
     </div>
     <div id="home-signin" class="col-xs-5 text-center">
+      <div id="alert" class="alert alert-danger alert-dismissible" style="display: none;">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Danger!</strong> This alert box could indicate a dangerous or potentially negative action.
+      </div>
       <div>
         <!-- <h2>H<span style="margin: -0.8vh;">&#128525;</span>USiE</h2> -->
-        <!-- <h1>H<span style="font-size: 1.3em; margin: -0.8vh;">&#9786;</span>USiE</h1> -->
-        <h1>HOUSIE</h1>
+        <!-- <h1 id="brand">H<span style="font-size: 1.3em; margin: -0.8vh;">&#9786;</span>USiE</h1> -->
+        <h1 id="brand">HOUSIE</h1>
         <h4>A multi-player online game</h4>
         <br/>
         <br/>
       </div>
       
       <div id="btn-login">
-        <button type="button" onclick="window.location.href ='https://accounts.google.com/o/oauth2/v2/auth?scope=profile+email&include_granted_scopes=true&response_type=token&state=state_parameter_passthrough_value&redirect_uri=http://localhost:3000&client_id=154902370229-bbigpdpguqde07mpgo53g0p3nrbhnvv1.apps.googleusercontent.com';" style="width:32vh; font-size: medium;" class="btn-lg btn-warning">
+        <button type="button" onclick="window.location.href =`${authUrl}`;" style="width:32vh; font-size: medium;" class="btn-lg btn-warning">
           Connect via Google <span class="glyphicon glyphicon-log-in"></span>
         </button>
       </div>
