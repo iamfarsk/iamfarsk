@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.10/clipboard.min.js"></script>
   
   <style>
     @font-face {
@@ -349,6 +350,26 @@
       document.getElementById('grp-confirm').style.display = 'block';
       document.getElementById('created-group-id').innerText = groupId;
       document.getElementById('created-group-name').innerText = groupName;
+      let clipboard = new ClipboardJS('#grp-info');
+      document.getElementById('grp-info').setAttribute('data-clipboard-text', groupId);
+      clipboard.on('success', function(e) {
+        document.getElementById('grp-info').style.backgroundColor = '#f0ad4e';
+        document.getElementById('grp-info').style.color = 'black';
+        setTimeout(() => {
+          document.getElementById('grp-info').style.backgroundColor = 'black';
+          document.getElementById('grp-info').style.color = '#f0ad4e';
+        }, 100);
+      });
+
+      clipboard.on('error', function(e) {
+        let copyInfoElem = document.getElementById('copy-info');
+        let oldHtml = copyInfoElem.innerHTML;
+        copyInfoElem.innerText = `Copy Failed : ${e.target} = ${e.action}`;
+        setTimeout(() => {
+          copyInfoElem.innerHTML = oldHtml;
+        }, 3000);
+      });
+
     }
 
     function displayChats(chats){
@@ -514,11 +535,13 @@
         
     }
 
+
+
   </script>
 </head>
 
 <body onload="populate('home-board')">
-<button class="btn" onclick="logout()">Logout</button>
+<!-- <button class="btn" onclick="logout()">Logout</button> -->
 <div id="home" class="container-fluid">
   <div class="row">
     
@@ -612,13 +635,13 @@
         </div>
 
         <div id="grp-confirm" style="display: none; margin-top: -25vh;">
-          <div id="grp-info" class="btn" onclick="copyToClipboard('created-group-id')" style="font-size: ;color: #f0ad4e; border: 2px solid #f0ad4e; max-width:80%; min-width: 35vh; font-size: 4vh;">
-            <p id="created-group-name">Group Name</p>
+          <div id="grp-info" class="btn" style="color: #f0ad4e; border: 2px solid #f0ad4e; max-width:80%; min-width: 35vh; font-size: 4vh;">
+            <p id="created-group-name" style="margin-bottom: -0.2vh;">Group Name</p>
             <p id="created-group-id" style="font-size: 1.5vh;">Group Id</p>
           </div>
           <br/>
           <br/>
-          <div>Click <span class="glyphicon glyphicon-hand-up"></span> to copy group id.</p>
+          <div id="copy-info">Click <span class="glyphicon glyphicon-hand-up"></span> to copy group id.</p>
           <div id="chat-box" class="container-fluid" style="overflow-y: scroll;text-align: center; margin: 5vh; height: 40vh;"> 
             <!-- <p>
               <img src="https://lh3.googleusercontent.com/a-/AOh14Gj6sMTQzHMXD8PRyGQ_kEvLilc1bMSnKnrjwjqKsw=s24-c" class="img-circle" style="border: 2px solid #f0ad4e;">
