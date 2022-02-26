@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>HOUSiE</title>
+  <title>Housie</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
@@ -18,7 +18,6 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-
   
   <style>
     @font-face {
@@ -33,6 +32,22 @@
     @font-face {
       font-family: Nosifer;
       src: url(fonts/Nosifer-Regular.ttf);
+    }
+    /* width */
+    ::-webkit-scrollbar {
+      width: 2px;
+    }
+
+    /* Track */
+    ::-webkit-scrollbar-track {
+      box-shadow: inset 0 0 5px black;
+      border-radius: 10px;
+    }
+
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+      background: #f0ad4e;
+      border-radius: 10px;
     }
 
     body{
@@ -88,6 +103,20 @@
       border-spacing:0.2em 0.2em
 	  }
 
+    #profile-loader {
+      border: 3px solid #f3f3f3; /* Light grey */
+      border-top: 3px solid #f0ad4e; /* bs-warn color */
+      border-radius: 50%;
+      width: 100px;
+      height: 100px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     /* Extra small devices (phones, 600px and down) */
     /* @media only screen and (max-height: 600px) {
     } */
@@ -95,7 +124,7 @@
     /* Extra small devices (phones, 600px and down) */
     @media only screen and (max-width: 600px) {
       #home-signin {
-        padding-top: 35vh;
+        padding-top: 30vh;
         width:100%;
       }
       #current {
@@ -141,6 +170,7 @@
     @media only screen and (min-width: 1200px) {
       
     }
+
 </style>
 <script>
   var voices = window.speechSynthesis.getVoices();
@@ -164,50 +194,114 @@
   const scope = 'profile+email'
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=${scope}&include_granted_scopes=true&response_type=token&state=state&redirect_uri=${redirectUri}&client_id=${clientId}`;
   const token = new URLSearchParams(window.location.hash.substr(1)).get("access_token");
-  if(token){
+  // if(token){
     
-      setTimeout(()=> {
-        document.getElementById('post-login').style.display = 'block';
-        document.getElementById('btn-login').style.display = 'none';
-        // console.log('slept')
-        // // document.getElementById("home").style.display = "none";
-        // document.getElementById("home").remove();
-        // document.getElementById("view2").style.display = "block";
-        // document.rem
-        // populate('board');
-      }, 0)
-  }else{
-    setTimeout(() => randomLoop(), 0);
-  }
+  //   const res = fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`);
+  //   res.then(async(data) => {
+  //     console.log(data.ok)
+  //     console.log(`${data.ok === true? 'success' : 'fail'}`)
+  //     let user = await data.json();
+  //     console.log(user)
+  //     document.getElementById('profile-img').src = decodeURIComponent(user.picture);
+  //     document.getElementById('profile-img').style.borderColor = '#f0ad4e'
+  //     document.getElementById('profile-loader').style.display = 'none';
+  //     document.getElementById('username').innerText = user.name;
+  //     document.getElementById('username').style = "text-transform: capitalize; font-weight: bold;";
+  //     document.getElementById('username').innerText = user.name;
+  //     document.getElementById('post-login').style.display = 'block';
+  //   });
+    
+  //     setTimeout(()=> {
+  //       document.getElementById('logo').style.display = 'none';
+  //       document.getElementById('user-info').style.display = 'block';
+        
+  //       document.getElementById('btn-login').style.display = 'none';
+  //       // console.log('slept')
+  //       // // document.getElementById("home").style.display = "none";
+  //       // document.getElementById("home").remove();
+  //       // document.getElementById("view2").style.display = "block";
+  //       // document.rem
+  //       // populate('board');
+  //     }, 0)
+  // }else{
+  //   setTimeout(() => randomLoop(), 0);
+  // }
 
-/*
+
   if(token){
-    var socket;
+    var socket, user, groupName, groupId;
     try{
+      socket = new WebSocket(`wss://pdq5ovvwjj.execute-api.ap-south-1.amazonaws.com/production?token=${token}`);
       socket.addEventListener('open', function (event) {
-        console.log('connection opened => ' + JSON.stringify(event));
-        // startBoard();
+        console.log('User authenticated and connected successfully.');
+        setTimeout(() => socket.send(JSON.stringify({"action": "hello"})), 1000);
       });
       socket.addEventListener('message', function (event) {
-        document.getElementById("view1").style.display = "none";
-        document.getElementById("view2").style.display = "block";
-        console.log(event);
-        let response = JSON.parse(event.data);
-        response.randomNumber && publish(response.randomNumber, response.randomColor);
+        let message = JSON.parse(event.data);
+        console.log(message);
+        switch (message.action) {
+          case 'hello':
+            user = message.user;
+            document.getElementById('profile-img').src = decodeURIComponent(user.picture);
+            document.getElementById('profile-img').style.borderColor = '#f0ad4e'
+            document.getElementById('profile-loader').style.display = 'none';
+            document.getElementById('username').innerText = user.name;
+            document.getElementById('username').style = "text-transform: capitalize; font-weight: bold;";
+            document.getElementById('post-login').style.display = 'block';
+            break;
+          case 'createBoard':
+            chatWindow(message);
+            displayChats(message.chats);
+            break;
+          case 'joinBoard':
+            chatWindow(message);
+            displayChats(message.chats);
+            break;
+          case 'chat':
+            displayChats([message.chat]);
+            break;
+          case 'error':
+            document.getElementById('error-on-join').innerText = message.msg;
+            document.getElementById('btn-confirm').disabled = false;
+            
+            setTimeout(() => {
+              document.getElementById('error-on-join').innerHTML = '&nbsp;';
+            }, 3000);
+            break;
+          default:
+            break;
+        }
+        
       });
-      socket.addEventListener('error', function(event) {
-        console.log(event);
-        document.getElementById('alert').style.display = 'block';
-      });
-    }catch(err){
-      console.log('dsfsdfsd' +err);
-      
-    }
-    
-    
 
+      socket.addEventListener('error', function(event) {
+        console.log("Connection Error: " + JSON.stringify(event));
+        // document.getElementById("errorCtrl").click();
+        document.getElementById("alert").style.display = 'block';
+        document.getElementById('user-info').style.display = 'none';
+      });
+
+    }catch(err){
+      console.log('Websocket error: ' +err);
+    }
+
+    setTimeout(()=> {
+        document.getElementById('home-signin').style.width = '100%';
+        document.getElementById('logo').style.display = 'none';
+        document.getElementById('user-info').style.display = 'block';
+        document.getElementById('btn-login').style.display = 'none';
+        document.getElementById('home-board-div').style.display = 'none';
+      }, 0)
+  }else{
+    setTimeout(() => {
+      // document.getElementById('logo').style.display = 'none';
+      // document.getElementById('btn-create').style.display = 'none';
+      // document.getElementById('btn-join').style.display = 'none';
+      // document.getElementById('post-login').style.display = 'block';
+      // document.getElementById('btn-login').style.display = 'none';
+      randomLoop()
+    }, 10);
   }
-    */
     
     
     
@@ -226,6 +320,67 @@
     //     }
     // }
 
+    function chatWindow(message){
+      groupId = message.id;
+      groupName = message.name;
+      document.getElementById('inp-create').style.display = 'none';
+      document.getElementById('ctrl-group').style.display = 'none';
+      document.getElementById('user-info').style.display = 'none';
+      document.getElementById('grp-confirm').style.display = 'block';
+      document.getElementById('created-group-id').innerText = groupId;
+      document.getElementById('created-group-name').innerText = groupName;
+    }
+
+    function displayChats(chats){
+      if(chats){
+        let chatbox = document.getElementById('chat-box');
+        chats.forEach(chat => {
+          let row = document.createElement('p');
+          row.innerText = chat;
+          chatbox.appendChild(row);
+          chatbox.scrollTop = chatbox.scrollHeight;
+        });
+      }
+    }
+
+    function time() {
+      return new Date().toLocaleTimeString('en-US');
+    }
+
+    function createGroup () {
+      groupName = document.getElementById("groupName").value;
+      if(groupName){
+        const msg = JSON.stringify({
+          "action": "createBoard",
+          "groupName": groupName
+        });
+        joinOrCreate(msg, 'Creating...');
+      }
+    }
+
+    const joinGroup = () => {
+      groupId = document.getElementById("groupName").value;
+      if(groupId){
+        const msg = JSON.stringify({
+          "action": "joinBoard",
+          "groupId": groupId
+        });
+        joinOrCreate(msg, 'Joining...');
+      }
+    }
+
+    function joinOrCreate(msg, innerText){
+      console.log(msg);
+      socket.send(msg);
+      // document.getElementById("groupName").style.display = 'none';
+      // document.getElementById('btn-cancel').style.display = 'none';
+      let btn = document.getElementById('btn-confirm');
+      btn.disabled = true;
+      document.getElementById("groupName").value = '';
+      // btn.innerText = innerText;
+      // btn.style.width = '35vh';
+      // window.alert(msg);
+    }
 
     // table board
     function populate(board){
@@ -299,6 +454,7 @@
 
     function resetGroupForm(){
       document.getElementById('ctrl-group').style.display = 'none';
+      document.getElementById('groupName').value = '';
       document.getElementById('inp-create').style.display = 'none';
       document.getElementById('btn-create').style.display = 'block';
       document.getElementById('btn-join').style.display = 'block';
@@ -307,27 +463,40 @@
     function enableForm(fn){
       document.getElementById('ctrl-group').style.display = 'block';
       document.getElementById('inp-create').style.display = 'block';
-      document.getElementById('inp-create').focus();
+      document.getElementById('groupName').setAttribute('placeholder', `${fn.name === 'joinGroup'? 'Group Id' : 'Group Name'}`);
+      document.getElementById('groupName').focus();
+      console.log(fn.name)
       document.getElementById('btn-confirm').onclick = fn;
       document.getElementById('btn-create').style.display = 'none';
       document.getElementById('btn-join').style.display = 'none';
     }
 
-    const create = () => {
-      window.alert('create');
+    function authorize() {
+        let btn = document.getElementById('login-btn');
+        btn.disabled = true;
+        btn.innerText = 'Connecting...';
+        window.location.href = authUrl;
     }
-    const join = () => {
-      window.alert('join');
+
+    function copyToClipboard(elementId) {
+      document.getElementById('grp-info').style.backgroundColor = '#f0ad4e';
+      document.getElementById('grp-info').style.color = 'black';
+      element = document.getElementById(elementId);
+      navigator.clipboard.writeText(element.innerText);
+      setTimeout(() => {
+        document.getElementById('grp-info').style.backgroundColor = 'black';
+        document.getElementById('grp-info').style.color = '#f0ad4e';
+      }, 100);
+        
     }
+
 
   </script>
 </head>
 
 <body onload="populate('home-board')">
 
-  
 <div id="home" class="container-fluid">
-  
   <div class="row">
     
     <div id="home-board-div" class="col-xs-7">
@@ -335,47 +504,114 @@
       </table>
     </div>
     <div id="home-signin" class="col-xs-5 text-center">
-      <div id="alert" class="alert alert-danger alert-dismissible" style="display: none;">
+      <!-- <div id="alert" class="alert alert-danger alert-dismissible" style="display: none;">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
         <strong>Danger!</strong> This alert box could indicate a dangerous or potentially negative action.
+      </div> -->
+<!-- Error -->  
+    <!-- <div id="alert">
+      <a id="errorCtrl" data-toggle="modal" data-backdrop="static" href="#errorModal" hidden></a>
+      <div id="errorModal" class="modal fade model-sm" role="dialog" style="color: black; margin-left: 10%; padding-top: 30vh; width: 80%;">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4>
+                <span style="color: red;" class="glyphicon glyphicon-alert">&nbsp;</span>
+                Authorization Failed
+              </h4>
+            </div>
+            <div class="modal-body">
+              <p>Some text in the modal.</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Try Again</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
+    </div> -->
+<!-- Error -->  
+      <div id="logo">
         <!-- <h2>H<span style="margin: -0.8vh;">&#128525;</span>USiE</h2> -->
         <!-- <h1 id="brand">H<span style="font-size: 1.3em; margin: -0.8vh;">&#9786;</span>USiE</h1> -->
         <h1 id="brand">HOUSIE</h1>
         <h4>A multi-player online game</h4>
-        <br/>
-        <br/>
       </div>
-      
+
       <div id="btn-login">
-        <button type="button" onclick="window.location.href =`${authUrl}`;" style="width:32vh; font-size: medium;" class="btn-lg btn-warning">
+        <br/>
+        <br/>
+        <button id="login-btn" type="button" onclick="authorize()" style="width:35vh; font-size: medium;" class="btn-lg btn-warning">
           Connect via Google <span class="glyphicon glyphicon-log-in"></span>
         </button>
       </div>
 
+      <div id="alert" style="display: none;">
+        <h1><span style="color: red;" class="glyphicon glyphicon-alert"></span></h1>
+        <h4 id="error-title"><b>Authorization Failed</b></h4>
+        <p id="error-body">Looks like you are already connected from another device.</p>
+        <br/>
+        <button type="button" onclick="window.location.href =`${redirectUri}`;" style="width:35vh; font-size: medium;" class="btn-lg btn-warning">
+          Home <span class="glyphicon glyphicon-home"></span>
+        </button>
+      </div>
+      
+      <div id="user-info" style="display: none;">
+        <img id="profile-loader" style="margin-right: -104px;" class="img-circle"></img>
+        <img id="profile-img" src="img/profile.png" class="img-circle" style="border: 2px solid;">
+        <h5 id="username">Identifying user...</h5>
+        <br/>
+      </div>
+
       <div id="post-login" style="display: none;">
+        <p id="error-on-join" style="color: red;">&nbsp;</p>
         <div id="btn-create">
-          <button type="button" onclick="enableForm(create)" style="width:32vh; font-size: medium;" class="btn-lg btn-warning">
+          <button type="button" onclick="enableForm(createGroup)" style="width:35vh; font-size: medium;" class="btn-lg btn-warning">
             Create Group</span>
           </button>
         </div>
         
         <div id="btn-join">
           <br/>
-          <button type="button" onclick="enableForm(join)" style="width:32vh;font-size: medium;" class="btn-lg btn-warning">
+          <button type="button" onclick="enableForm(joinGroup)" style="width:35vh;font-size: medium;" class="btn-lg btn-warning">
             Join Group
           </button>
         </div>
   
         <div id="inp-create" style="display: none;">
-          <input type="text" placeholder="Group name" autofocus=true class="input-lg text-center" style="color:black; width:32vh; font-size: medium;"/>
+          <input id="groupName" type="text" placeholder="Group Name" autofocus=true class="input-lg text-center" style="color:black; width:35vh; font-size: small;"/>
         </div>
+
         <div id="ctrl-group" style="display: none;">
           <br/>
-          <button id="btn-cancel" type="button" onclick="resetGroupForm()" class="btn btn-lg btn-danger" style="width: 15.5vh; font-size: medium;">Cancel</button>&nbsp;
-          <button id="btn-confirm" type="button" class="btn btn-lg btn-success" style="width: 15.5vh; font-size: medium;">Confirm</button>
+          <button id="btn-cancel" type="button" onclick="resetGroupForm()" class="btn btn-lg btn-danger" style="width: 17vh; font-size: medium;">Cancel</button>&nbsp;
+          <button id="btn-confirm" type="button" class="btn btn-lg btn-success" style="width: 17vh; font-size: medium;">Confirm</button>
         </div>
+
+        <div id="grp-confirm" style="display: none; margin-top: -25vh;">
+          <div id="grp-info" class="btn" onclick="copyToClipboard('created-group-id')" style="font-size: ;color: #f0ad4e; border: 2px solid #f0ad4e; max-width:80%; min-width: 35vh; font-size: 4vh;">
+            <p id="created-group-name">Group Name</p>
+            <p id="created-group-id" style="font-size: 1.5vh;">Group Id</p>
+          </div>
+          <br/>
+          <br/>
+          <div>Click <span class="glyphicon glyphicon-hand-up"></span> to copy group id.</p>
+          <div id="chat-box" class="container-fluid" style="overflow-y: scroll;text-align: center; margin: 5vh; height: 40vh;"> 
+            <!-- <p>
+              <img src="https://lh3.googleusercontent.com/a-/AOh14Gj6sMTQzHMXD8PRyGQ_kEvLilc1bMSnKnrjwjqKsw=s24-c" class="img-circle" style="border: 2px solid #f0ad4e;">
+              <span> Farhan Shaikh created  fasf </span>
+            </p> -->
+          </div>
+
+          <div id="btn-start">
+            <br/>
+            <button type="button" onclick="" style="width:35vh;font-size: medium;" class="btn-lg btn-warning">
+              Start Game
+            </button>
+          </div>
+          
+        </div>
+
       </div>
 
     </div>
