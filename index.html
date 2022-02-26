@@ -198,10 +198,10 @@
     
   //   const res = fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`);
   //   res.then(async(data) => {
-  //     console.log(data.ok)
-  //     console.log(`${data.ok === true? 'success' : 'fail'}`)
+  //     log(data.ok)
+  //     log(`${data.ok === true? 'success' : 'fail'}`)
   //     let user = await data.json();
-  //     console.log(user)
+  //     log(user)
   //     document.getElementById('profile-img').src = decodeURIComponent(user.picture);
   //     document.getElementById('profile-img').style.borderColor = '#f0ad4e'
   //     document.getElementById('profile-loader').style.display = 'none';
@@ -216,7 +216,7 @@
   //       document.getElementById('user-info').style.display = 'block';
         
   //       document.getElementById('btn-login').style.display = 'none';
-  //       // console.log('slept')
+  //       // log('slept')
   //       // // document.getElementById("home").style.display = "none";
   //       // document.getElementById("home").remove();
   //       // document.getElementById("view2").style.display = "block";
@@ -227,21 +227,28 @@
   //   setTimeout(() => randomLoop(), 0);
   // }
 
-
   if(token){
-    var socket, user, groupName, groupId;
+    var socket, user, groupName, groupId, heartBeat;
     try{
       socket = new WebSocket(`wss://pdq5ovvwjj.execute-api.ap-south-1.amazonaws.com/production?token=${token}`);
       socket.addEventListener('open', function (event) {
-        console.log('User authenticated and connected successfully.');
-        setTimeout(() => socket.send(JSON.stringify({"action": "hello"})), 1000);
+        log('User authenticated and connected successfully.');
+        setTimeout(async() => {
+          await socket.send(JSON.stringify({"action": "hello"}));
+          log('clientHello');
+        }, 1000);
+        heartBeat = setInterval(() => {
+          socket.send('heartbeat');
+          log('I am alive..!')
+        }, 8 * 60 * 1000);
       });
       socket.addEventListener('message', function (event) {
         let message = JSON.parse(event.data);
-        console.log(message);
+        log(message);
         switch (message.action) {
           case 'hello':
             user = message.user;
+            log('serverHello - ' + user.email);
             document.getElementById('profile-img').src = decodeURIComponent(user.picture);
             document.getElementById('profile-img').style.borderColor = '#f0ad4e'
             document.getElementById('profile-loader').style.display = 'none';
@@ -263,7 +270,6 @@
           case 'error':
             document.getElementById('error-on-join').innerText = message.msg;
             document.getElementById('btn-confirm').disabled = false;
-            
             setTimeout(() => {
               document.getElementById('error-on-join').innerHTML = '&nbsp;';
             }, 3000);
@@ -275,14 +281,20 @@
       });
 
       socket.addEventListener('error', function(event) {
-        console.log("Connection Error: " + JSON.stringify(event));
+        log("Connection Error: " + JSON.stringify(event));
         // document.getElementById("errorCtrl").click();
         document.getElementById("alert").style.display = 'block';
         document.getElementById('user-info').style.display = 'none';
       });
 
+      socket.addEventListener('close', (event) => {
+        clearInterval(heartBeat);
+        window.location.href = redirectUri;
+        log('connection closed => ' + JSON.stringify(event));
+      });
+
     }catch(err){
-      console.log('Websocket error: ' +err);
+      log('Websocket error: ' +err);
     }
 
     setTimeout(()=> {
@@ -319,6 +331,14 @@
     //       table.appendChild(cell);
     //     }
     // }
+
+    function log(message){
+      console.log(time() + ' : ' + message);
+    }
+
+    function logout(){
+      socket.close();
+    }
 
     function chatWindow(message){
       groupId = message.id;
@@ -370,7 +390,7 @@
     }
 
     function joinOrCreate(msg, innerText){
-      console.log(msg);
+      log(msg);
       socket.send(msg);
       // document.getElementById("groupName").style.display = 'none';
       // document.getElementById('btn-cancel').style.display = 'none';
@@ -465,7 +485,7 @@
       document.getElementById('inp-create').style.display = 'block';
       document.getElementById('groupName').setAttribute('placeholder', `${fn.name === 'joinGroup'? 'Group Id' : 'Group Name'}`);
       document.getElementById('groupName').focus();
-      console.log(fn.name)
+      log(fn.name)
       document.getElementById('btn-confirm').onclick = fn;
       document.getElementById('btn-create').style.display = 'none';
       document.getElementById('btn-join').style.display = 'none';
@@ -482,7 +502,11 @@
       document.getElementById('grp-info').style.backgroundColor = '#f0ad4e';
       document.getElementById('grp-info').style.color = 'black';
       element = document.getElementById(elementId);
-      navigator.clipboard.writeText(element.innerText);
+      try{
+        navigator.clipboard.writeText(element.innerText);
+      }catch(err){
+        window.alert(JSON.stringify(err));
+      }
       setTimeout(() => {
         document.getElementById('grp-info').style.backgroundColor = 'black';
         document.getElementById('grp-info').style.color = '#f0ad4e';
@@ -490,12 +514,11 @@
         
     }
 
-
   </script>
 </head>
 
 <body onload="populate('home-board')">
-
+<button class="btn" onclick="logout()">Logout</button>
 <div id="home" class="container-fluid">
   <div class="row">
     
