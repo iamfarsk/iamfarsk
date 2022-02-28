@@ -369,6 +369,7 @@
           case 'error':
             if(message.routeKey === 'claimPrize'){
               window.alert(message.msg);
+              document.getElementById('btn-claim').disabled = false;
             }else{
               document.getElementById('error-on-join').innerText = message.msg;
               document.getElementById('btn-confirm').disabled = false;
@@ -627,16 +628,10 @@
           element.style.color = '#f0ad4e';
           element.style.fontWeight = 'bolder';
           clientTicket.push(number);
-        }else{
-          element.style.backgroundColor = 'whitesmoke';
-          element.style.color = 'black';
-          element.style.fontWeight = 'normal';
-          clientTicket.splice(clientTicket.findIndex(e => number === e), 1);
-        }
-        if(clientTicket.length === 15){
-          document.getElementById('btn-claim').disabled = false;
-        }else{
-          document.getElementById('btn-claim').disabled = true;
+          element.style.pointerEvents = 'none';
+          if(clientTicket.length === 15){
+            document.getElementById('btn-claim').disabled = false;
+          }
         }
       }
     }
@@ -830,7 +825,7 @@
         <br/>
       </div>
 
-      <div id="winner-info" style="display: none;padding-top: -5vh;">
+      <div id="winner-info" style="display: none;padding-top: -10vh;">
         <h1>Winner</h1>
         <br/>
         <img id="winner-img" src="img/profile.png" class="img-circle" style="border: 2px solid #f0ad4e;">
