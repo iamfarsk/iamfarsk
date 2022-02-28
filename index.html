@@ -60,15 +60,35 @@
       font-family: Nosifer;
     }
 
-    #view2{
+    #game{
       display: none;
     }
 
     .square {
-      height: 10%;
-      width: 10%;
-      text-align: center;
-      vertical-align: middle;
+      height: 30.6vh;
+      width: 22.1vh;
+      border: 1px solid black;
+      background-color: #f0ad4e;
+      margin-top: -1.5vh;
+      margin-bottom: -1.5vh;
+      /* padding-top: 10%; */
+
+      /* font-size: 10vh; */
+    }
+
+    .square-content{
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      margin: auto;
+      height: 20vh;
+      width: 20vh;
+      line-height: 20vh;
+      font-size: 10vh;
+
+      border-radius: 50%;
     }
 
     .header {
@@ -84,10 +104,10 @@
 
 	  #current {
 		  height: 90vh; 
-		  background-color:royalblue;
+		  background-color:black;
 		  font-size:70vh; 
 		  font-weight:bolder;
-		  color:white;
+		  color:#f0ad4e;
 	  }
 	  
     #home-board-div, #home-board {
@@ -97,7 +117,7 @@
       border-spacing:0.2em 0.2em
 	  }
 
-	  #board-div, #board {
+	  #ticket-div, #ticket, #board-div, #board {
 		  height: 90vh;
       font-size: 3vh;
       border-collapse:separate;
@@ -127,20 +147,47 @@
       #home-signin {
         padding-top: 30vh;
         width:100%;
+        /* height: 60vh; */
       }
+
       #current {
         width:100%;
         height: 50vh;
         font-size:35vh; 
       }
+
       #home-board-div, #home-board {
         display: none;
 	    }
-      #board-div, #board {
+      
+      #ticket-div, #ticket, #board-div, #board {
         width:100%;
 		    height: 40vh;
         font-size: 2vh;
 	    }
+
+      .square {
+        height: 11.8vh;
+        width: 18%;
+        border: 1px solid black;
+        margin: 0px;
+      }
+
+      .square-content{
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: auto;
+        height: 60px;
+        width: 60px;
+        line-height: 60px;
+        font-size: 4vh;
+        background-color: #f0ad4e;
+        border: 1px solid black;
+        border-radius: 50%;
+      }
 
     }
 
@@ -174,13 +221,7 @@
 
 </style>
 <script>
-  var voices = window.speechSynthesis.getVoices();
-  const sleep = async (secs) => new Promise(resolve => setTimeout(resolve, secs * 1000));
-  var numbers = [];
-  for(i=1; i <=90 ; i++){
-      numbers.push(i);
-  }
-  
+
   Array.prototype.shuffle = function() {
     let m = this.length, i;
     while (m) {
@@ -190,11 +231,28 @@
     return this;
   }
 
+  var numbers = [];
+  for(i=1; i <= 90 ; i++){
+      numbers.push(i);
+  }
+
+  const debug = window.location.host === 'localhost:3000' ? true : false;
+  const sleep = async (secs) => new Promise(resolve => setTimeout(resolve, secs * 1000));
   const redirectUri = window.location.protocol + '//' + window.location.host;
   const clientId = '154902370229-bbigpdpguqde07mpgo53g0p3nrbhnvv1.apps.googleusercontent.com';
   const scope = 'profile+email'
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=${scope}&include_granted_scopes=true&response_type=token&state=state&redirect_uri=${redirectUri}&client_id=${clientId}`;
   const token = new URLSearchParams(window.location.hash.substr(1)).get("access_token");
+  var voices = window.speechSynthesis.getVoices();
+  
+  var serverTicket = [];
+  var clientTicket = [];
+  var drawnNumbers = [];
+  var socket, user, groupName, groupId, heartBeat, winner
+  var connected = false;
+  
+  
+  
   // if(token){
     
   //   const res = fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`);
@@ -220,7 +278,7 @@
   //       // log('slept')
   //       // // document.getElementById("home").style.display = "none";
   //       // document.getElementById("home").remove();
-  //       // document.getElementById("view2").style.display = "block";
+  //       // document.getElementById("game").style.display = "block";
   //       // document.rem
   //       // populate('board');
   //     }, 0)
@@ -229,25 +287,43 @@
   // }
 
   if(token){
-    var socket, user, groupName, groupId, heartBeat;
+    
     try{
       socket = new WebSocket(`wss://pdq5ovvwjj.execute-api.ap-south-1.amazonaws.com/production?token=${token}`);
+      
       socket.addEventListener('open', function (event) {
         log('User authenticated and connected successfully.');
         setTimeout(async() => {
           await socket.send(JSON.stringify({"action": "hello"}));
           log('clientHello');
         }, 1000);
+
+        // wait 30 seconds for serverHello
+        setTimeout(() => {
+          if(!connected){
+            window.alert('Try Again...')
+            window.location.href = redirectUri;
+          }
+        }, 30 * 1000);
+
         heartBeat = setInterval(() => {
           socket.send('heartbeat');
-          log('I am alive..!')
+          log('I am alive..!');
         }, 8 * 60 * 1000);
+
+        setTimeout(() => {
+          // stop heartbeat after 30 minutes
+          clearInterval(heartBeat);
+        }, 30 * 60 * 1000);
+
       });
+
       socket.addEventListener('message', function (event) {
         let message = JSON.parse(event.data);
-        log(message);
+        log(`message => ${JSON.stringify(message)}`);
         switch (message.action) {
           case 'hello':
+            connected = true;
             user = message.user;
             log('serverHello - ' + user.email);
             document.getElementById('profile-img').src = decodeURIComponent(user.picture);
@@ -257,28 +333,54 @@
             document.getElementById('username').style = "text-transform: capitalize; font-weight: bold;";
             document.getElementById('post-login').style.display = 'block';
             break;
-          case 'createBoard':
+          case 'createGroup':
             chatWindow(message);
+            message.chats.push('Waiting for others to join...');
             displayChats(message.chats);
+            document.getElementById('btn-start').disabled = true;
             break;
-          case 'joinBoard':
+          case 'joinGroup':
             chatWindow(message);
             displayChats(message.chats);
             break;
           case 'chat':
             displayChats([message.chat]);
+            document.getElementById('btn-start').disabled = false;
+            break;
+          case 'draw':
+            log(`Draw: ${message.number}`);
+            drawnNumbers.push(message.number);
+            publish('ticket', message.number, message.color);
+            break;
+          case 'start':
+            log(`Game started: ${message.success}`);
+            document.getElementById('btn-start').disabled = false;
+            document.querySelectorAll(".chat-row").forEach(el => el.remove());
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            // populate('board');
+            populateTicket('ticket');
+            break;
+          case 'claimPrize':
+            document.querySelectorAll(".ticket-row").forEach(el => el.remove());
+            winner = message.winner;
+            displayWinner();
             break;
           case 'error':
-            document.getElementById('error-on-join').innerText = message.msg;
-            document.getElementById('btn-confirm').disabled = false;
-            setTimeout(() => {
-              document.getElementById('error-on-join').innerHTML = '&nbsp;';
-            }, 3000);
+            if(message.routeKey === 'claimPrize'){
+              window.alert(message.msg);
+            }else{
+              document.getElementById('error-on-join').innerText = message.msg;
+              document.getElementById('btn-confirm').disabled = false;
+              document.getElementById('btn-cancel').disabled = false;
+              setTimeout(() => {
+                document.getElementById('error-on-join').innerHTML = '&nbsp;';
+              }, 3000);
+            }
             break;
           default:
             break;
         }
-        
       });
 
       socket.addEventListener('error', function(event) {
@@ -290,12 +392,12 @@
 
       socket.addEventListener('close', (event) => {
         clearInterval(heartBeat);
-        window.location.href = redirectUri;
-        log('connection closed => ' + JSON.stringify(event));
+        // window.location.href = redirectUri;
+        log('connection closed => ' + event.code);
       });
 
     }catch(err){
-      log('Websocket error: ' +err);
+      log('Websocket error: ' + JSON.stringify(err));
     }
 
     setTimeout(()=> {
@@ -304,16 +406,34 @@
         document.getElementById('user-info').style.display = 'block';
         document.getElementById('btn-login').style.display = 'none';
         document.getElementById('home-board-div').style.display = 'none';
-      }, 0)
+      }, 0);
   }else{
+
     setTimeout(() => {
+      // game screen
+      // document.getElementById('home').style.display = 'none';
+      // document.getElementById('game').style.display = 'block';
+      
+
       // document.getElementById('logo').style.display = 'none';
       // document.getElementById('btn-create').style.display = 'none';
       // document.getElementById('btn-join').style.display = 'none';
       // document.getElementById('post-login').style.display = 'block';
       // document.getElementById('btn-login').style.display = 'none';
-      randomLoop()
-    }, 10);
+      
+      // home screen
+      populate('home-board');
+      randomLoop('home-board');
+
+      // winner screen
+      // document.getElementById('home').style.display = 'block';
+      // document.getElementById('logo').style.display = 'none';
+      // document.getElementById('btn-login').style.display = 'none'
+      // document.getElementById('winner-info').style.display = 'block';
+
+
+
+    }, 1);
   }
     
     
@@ -334,7 +454,35 @@
     // }
 
     function log(message){
-      console.log(time() + ' : ' + message);
+      if(debug){
+        console.log(time() + ' : ' + message);
+      }
+    }
+
+    function newGame(){
+      numbers = [];
+      serverTicket = [];
+      clientTicket = [];
+      drawnNumbers = [];
+      groupName = '';
+      groupId = '';
+      winner = {};
+      document.getElementById('winner-info').style.display = 'none';
+      document.getElementById('home').style.display = 'block';
+      document.getElementById('user-info').style.display = 'block';
+      document.getElementById('post-login').style.display = 'block';
+      document.getElementById('btn-create').style.display = 'block';
+      document.getElementById('btn-join').style.display = 'block';
+    }
+
+    function displayWinner(){
+      document.getElementById('game').style.display = 'none';
+      document.getElementById('home').style.display = 'block';
+      document.getElementById('grp-confirm').style.display = 'none';
+      document.getElementById('winner-info').style.display = 'block';
+      document.getElementById('winner-img').src = decodeURIComponent(winner.picture);
+      document.getElementById('winner-name').innerText = winner.name;
+      document.getElementById('winner-email').innerText = winner.email;
     }
 
     function logout(){
@@ -344,12 +492,16 @@
     function chatWindow(message){
       groupId = message.id;
       groupName = message.name;
+      serverTicket = message.ticket;
+      document.getElementById('btn-confirm').disabled = false;
+      document.getElementById('btn-cancel').disabled = false;
       document.getElementById('inp-create').style.display = 'none';
       document.getElementById('ctrl-group').style.display = 'none';
       document.getElementById('user-info').style.display = 'none';
       document.getElementById('grp-confirm').style.display = 'block';
       document.getElementById('created-group-id').innerText = groupId;
       document.getElementById('created-group-name').innerText = groupName;
+      
       let clipboard = new ClipboardJS('#grp-info');
       document.getElementById('grp-info').setAttribute('data-clipboard-text', groupId);
       clipboard.on('success', function(e) {
@@ -377,6 +529,7 @@
         let chatbox = document.getElementById('chat-box');
         chats.forEach(chat => {
           let row = document.createElement('p');
+          row.setAttribute('class','chat-row');
           row.innerText = chat;
           chatbox.appendChild(row);
           chatbox.scrollTop = chatbox.scrollHeight;
@@ -386,6 +539,12 @@
 
     function time() {
       return new Date().toLocaleTimeString('en-US');
+    }
+
+    function submitGroup(event){
+      if (event.keyCode === 13) {
+        document.getElementById("btn-confirm").click();
+      }
     }
 
     function createGroup () {
@@ -411,16 +570,12 @@
     }
 
     function joinOrCreate(msg, innerText){
-      log(msg);
+      log(JSON.stringify(msg));
       socket.send(msg);
-      // document.getElementById("groupName").style.display = 'none';
-      // document.getElementById('btn-cancel').style.display = 'none';
       let btn = document.getElementById('btn-confirm');
       btn.disabled = true;
+      document.getElementById('btn-cancel').disabled = true;
       document.getElementById("groupName").value = '';
-      // btn.innerText = innerText;
-      // btn.style.width = '35vh';
-      // window.alert(msg);
     }
 
     // table board
@@ -432,12 +587,57 @@
         for(j=1; j<=10; j++){
           k++;
           var cell = document.createElement("td");
-          cell.setAttribute('id', k);
+          cell.setAttribute('id', `${board}-${k}`);
           cell.innerHTML = k;
           cell.setAttribute('align', 'center');
           row.appendChild(cell);
         }
         table.appendChild(row);
+      }
+    }
+
+    function populateTicket(board){
+      var k=0;
+      var table = document.getElementById(board);
+      for(i=1; i<=3; i++){
+        var row = document.createElement("tr");
+        row.setAttribute('class', 'ticket-row');
+        for(j=1; j<=5; j++){
+          var cell = document.createElement("td");
+          cell.setAttribute('id', `${board}-${serverTicket[k]}`);
+          cell.innerHTML = serverTicket[k];
+          cell.setAttribute('align', 'center');
+          cell.style.border = '3px solid #f0ad4e';
+          cell.style.backgroundColor = 'whitesmoke';
+          cell.style.cursor = "pointer"
+          cell.style.fontSize = 'xx-large'
+          cell.setAttribute('onclick', `ticketNumber(this)`);
+          row.appendChild(cell);
+          k++;
+        }
+        table.appendChild(row);
+      }
+    }
+
+    function ticketNumber(element){
+      let number = Number(element.innerText);
+      if(serverTicket.includes(number) && drawnNumbers.includes(number)){
+        if(!clientTicket.includes(number)){
+          element.style.backgroundColor = 'black';
+          element.style.color = '#f0ad4e';
+          element.style.fontWeight = 'bolder';
+          clientTicket.push(number);
+        }else{
+          element.style.backgroundColor = 'whitesmoke';
+          element.style.color = 'black';
+          element.style.fontWeight = 'normal';
+          clientTicket.splice(clientTicket.findIndex(e => number === e), 1);
+        }
+        if(clientTicket.length === 15){
+          document.getElementById('btn-claim').disabled = false;
+        }else{
+          document.getElementById('btn-claim').disabled = true;
+        }
       }
     }
 
@@ -450,37 +650,47 @@
     }
 
     function startBoard(){
-      socket.send(JSON.stringify({"action":"start"}))
+      document.getElementById('btn-start').disabled = true;
+      socket.send(JSON.stringify({
+        "action":"start",
+        "groupId": groupId
+      }));
     }
 
-    function randomLoop(){
+    function randomLoop(board){
       let interval = setInterval(() => {
         var random = numbers.shuffle().pop();
         if(random){
-          publish(random);
+          publish(board, random);
         }else{
           clearInterval(interval);
         }
       }, 50);
     }
 
-    function random(){
+    function random(board){
       var random = numbers.shuffle().pop();
       random && publish(random);
     }
 
-    function publish(number, color){
-      // speak(number);
-      var element = document.getElementById(number);
-      let rColor = color || generateRandomColor();
-      element.style.backgroundColor = rColor;
-      element.style.borderRadius = '50%';
-      element.innerHTML = number;
-      element.style.color = "white";
-      element.style.fontWeight = "bolder";
-      document.getElementById("current").innerHTML = number;
-      document.getElementById("current").style.backgroundColor = rColor;
+    function publish(board, number, color){
+      if(board === 'ticket'){
+        speak(number);
+        document.getElementById("current").innerHTML = number;
+        // document.getElementById("current").style.backgroundColor = rColor;
+      }else{
+        // speak(number);
+        let rColor = color || generateRandomColor();
+        var element = document.getElementById(`${board}-${number}`);
+        element.style.backgroundColor = rColor;
+        // element.style.borderRadius = '50%';
+        element.innerHTML = number;
+        element.style.color = "white";
+        element.style.fontWeight = "bolder";
+      }
+      
     }
+
     function speak(number){
       var msg = new SpeechSynthesisUtterance();
       msg.voice = voices[10];
@@ -506,19 +716,27 @@
       document.getElementById('inp-create').style.display = 'block';
       document.getElementById('groupName').setAttribute('placeholder', `${fn.name === 'joinGroup'? 'Group Id' : 'Group Name'}`);
       document.getElementById('groupName').focus();
-      log(fn.name)
       document.getElementById('btn-confirm').onclick = fn;
       document.getElementById('btn-create').style.display = 'none';
       document.getElementById('btn-join').style.display = 'none';
     }
 
     function authorize() {
-        let btn = document.getElementById('login-btn');
-        btn.disabled = true;
-        btn.innerText = 'Connecting...';
-        window.location.href = authUrl;
+      let btn = document.getElementById('login-btn');
+      btn.disabled = true;
+      btn.innerText = 'Connecting...';
+      window.location.href = authUrl;
     }
 
+    function claimPrize(){
+      document.getElementById('btn-claim').disabled = true;
+      socket.send(JSON.stringify({
+        "action": "claimPrize",
+        "ticket": clientTicket
+      }));
+    }
+
+/*
     function copyToClipboard(elementId) {
       document.getElementById('grp-info').style.backgroundColor = '#f0ad4e';
       document.getElementById('grp-info').style.color = 'black';
@@ -534,49 +752,52 @@
       }, 100);
         
     }
-
+*/
 
 
   </script>
 </head>
 
-<body onload="populate('home-board')">
+<body>
 <!-- <button class="btn" onclick="logout()">Logout</button> -->
 <div id="home" class="container-fluid">
   <div class="row">
     
-    <div id="home-board-div" class="col-xs-7">
+    <div id="home-board-div" class="col-xs-7" style="padding-left:0%; padding-right: 0%;">
       <table id="home-board" class="table">
       </table>
     </div>
+
     <div id="home-signin" class="col-xs-5 text-center">
       <!-- <div id="alert" class="alert alert-danger alert-dismissible" style="display: none;">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
         <strong>Danger!</strong> This alert box could indicate a dangerous or potentially negative action.
       </div> -->
-<!-- Error -->  
-    <!-- <div id="alert">
-      <a id="errorCtrl" data-toggle="modal" data-backdrop="static" href="#errorModal" hidden></a>
-      <div id="errorModal" class="modal fade model-sm" role="dialog" style="color: black; margin-left: 10%; padding-top: 30vh; width: 80%;">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h4>
-                <span style="color: red;" class="glyphicon glyphicon-alert">&nbsp;</span>
-                Authorization Failed
-              </h4>
-            </div>
-            <div class="modal-body">
-              <p>Some text in the modal.</p>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Try Again</button>
+      
+      <!-- Error -->  
+      <!-- <div id="alert">
+        <a id="errorCtrl" data-toggle="modal" data-backdrop="static" href="#errorModal" hidden></a>
+        <div id="errorModal" class="modal fade model-sm" role="dialog" style="color: black; margin-left: 10%; padding-top: 30vh; width: 80%;">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4>
+                  <span style="color: red;" class="glyphicon glyphicon-alert">&nbsp;</span>
+                  Authorization Failed
+                </h4>
+              </div>
+              <div class="modal-body">
+                <p>Some text in the modal.</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Try Again</button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div> -->
-<!-- Error -->  
+      </div> -->
+      <!-- Error -->
+
       <div id="logo">
         <!-- <h2>H<span style="margin: -0.8vh;">&#128525;</span>USiE</h2> -->
         <!-- <h1 id="brand">H<span style="font-size: 1.3em; margin: -0.8vh;">&#9786;</span>USiE</h1> -->
@@ -609,8 +830,25 @@
         <br/>
       </div>
 
+      <div id="winner-info" style="display: none;padding-top: -5vh;">
+        <h1>Winner</h1>
+        <br/>
+        <img id="winner-img" src="img/profile.png" class="img-circle" style="border: 2px solid #f0ad4e;">
+        <h4 id="winner-name" style="text-transform: capitalize; font-weight: bold;">Winner</h4>
+        <p id="winner-email" style="font-size: x-small;">Winner Email</p>
+        <br/>
+        <br/>
+        <div id="btn-new-game">
+          <button type="button" onclick="newGame()" style="width:35vh; font-size: medium;" class="btn-lg btn-warning">
+            New Game</span>
+          </button>
+        </div>
+      </div>
+
       <div id="post-login" style="display: none;">
+
         <p id="error-on-join" style="color: red;">&nbsp;</p>
+
         <div id="btn-create">
           <button type="button" onclick="enableForm(createGroup)" style="width:35vh; font-size: medium;" class="btn-lg btn-warning">
             Create Group</span>
@@ -625,7 +863,7 @@
         </div>
   
         <div id="inp-create" style="display: none;">
-          <input id="groupName" type="text" placeholder="Group Name" autofocus=true class="input-lg text-center" style="color:black; width:35vh; font-size: small;"/>
+          <input id="groupName" onkeyup="return submitGroup(event);" type="text" placeholder="Group Name" autofocus=true class="input-lg text-center" style="color:black; width:35vh; font-size: small;"/>
         </div>
 
         <div id="ctrl-group" style="display: none;">
@@ -649,34 +887,74 @@
             </p> -->
           </div>
 
-          <div id="btn-start">
+          <div>
             <br/>
-            <button type="button" onclick="" style="width:35vh;font-size: medium;" class="btn-lg btn-warning">
+            <button id="btn-start" type="button" onclick="startBoard()" style="width:35vh;font-size: medium;" class="btn-lg btn-warning">
               Start Game
             </button>
           </div>
           
         </div>
-
       </div>
-
     </div>
   </div>
 </div>
-
-<div id="view2" onload="populate('board');" class="container-fluid">
-    <div class="row">
-        <div id="current" class="col-xs-6 text-center">?</div>
-        <div id="board-div" class="col-xs-6">
-            <table id="board" class="table">
-            </table>
-        </div>
-    </div>
-    <div class="header row text-center">
-        <button type="button" onclick="randomLoop()" style="height: 100%; font-size: x-large;" class="btn-xs btn-block btn-warning">Start</button>      
-    </div>
 </div>
-  
+<div id="game" class="container-fluid">
+  <div class="row">
+      <div id="current" class="col-xs-6 text-center">?</div>
+      
+<!--       
+      <div id="board-div" class="col-xs-6">
+          <table id="board" class="table">
+          </table>
+      </div> -->
+
+
+      <div id="ticket-div" class="col-xs-6" style="padding-left:0%; padding-right: 0%;">
+          <table id="ticket" class="table" style="background-color: black">
+          </table>
+      </div>
+
+
+      <!-- my ticket div-->
+<!-- 
+
+      <div id="board-div" class="col-xs-6 ">
+        <div id="row1" class="row">
+          <div class="col-sm-1 square btn"><div class="square-content">90</div>
+
+          </div>
+          <div class="col-sm-1 square btn"><div class="square-content">1</div>
+
+          </div>
+          <div class="col-sm-1 square btn"><div class="square-content">1</div>
+
+          </div>
+          <div class="col-sm-1 square btn"><div class="square-content">1</div>
+
+          </div>
+          <div class="col-sm-1 square btn"><div class="square-content">1</div>
+
+          </div>
+        </div>
+
+        
+
+      </div>
+       -->
+<!-- my ticket -->
+
+  </div>
+
+  <div class="row">
+    <button id="btn-claim" disabled type="button" onclick="claimPrize()" style="height: 10vh; margin-left: -1vw; width: 102vw; font-size: medium;" class="btn-lg btn-warning btn-block">
+      Claim Prize
+    </button>
+  </div>
+
+</div>
+
 </body>
 
 
